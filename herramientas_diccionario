@@ -1,0 +1,239 @@
+def cargar_funcion(dic_comentarios, dic_funciones, archivo, linea, nuevo_archivo):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de cargar todo lo relativo a la funcion en
+       los dos diccionarios pasados por parámetro. Devuelve la linea en la cual termina la funcion y una
+       variable booleana que será True si en la línea que termina la función comienza la siguiente función]"""
+    
+    
+    nombre = cargar_nombre(linea)
+    cargar_primera_linea(dic_comentarios, dic_funciones, archivo, linea, nuevo_archivo, nombre)
+    
+    
+    linea = archivo.readline()
+    fin_funcion = False
+    comienza_funcion = False
+                
+    while fin_funcion == False and linea != "":
+                    
+        if "#" in linea and "\"#\"" not in linea:  
+            cargar_comentario_numeral(linea, dic_comentarios,nombre)
+        
+        if "\"\"\"" in linea:
+            linea = cargar_comentario_comillas(dic_comentarios, archivo, linea, nuevo_archivo, nombre) 
+                    
+        else:
+            if len(linea.rstrip()) > 1: 
+                cargar_lineas(linea, dic_funciones,nombre)
+                fin_funcion, comienza_funcion = corroborar_final_funcion(linea,dic_funciones, nombre)
+                    
+        if comienza_funcion == False and comienza_funcion == False:    
+            linea = archivo.readline()
+            fin_funcion, comienza_funcion = corroborar_final_funcion(linea,dic_funciones, nombre)
+                        
+                        
+                        
+    return linea, comienza_funcion
+
+def cargar_nombre(linea):                
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe la primera línea de la función y devuelve el
+    nombre de dicha función]"""
+            
+    nombre_funcion = linea[linea.find("def")+4:linea.find("(")]
+    
+    return nombre_funcion
+                
+def cargar_parametros(linea):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe la primera línea de la función y se
+    encarga de extraer los parámetros dentro de los paréntesis incluyéndolos]
+    """
+
+    parametros = linea[linea.find("("):linea.find(")")+1]
+    parametros_sin_coma = parametros.replace("," , ";")
+    return parametros_sin_coma
+                
+ 
+
+
+def cargar_autor(linea):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe una linea del archivo que se sepa que tiene
+    la palabra autor en su interior y devuelve el nombre del autor]
+    """
+
+    autor = linea[linea.find(":")+1:linea.find("]")]
+                    
+    return autor
+
+def cargar_ayuda(archivo, linea):  
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga armar una cadena de texto con todo lo referente a la ayuda de la
+       funcion. Contempla si es una o multiples lineas de comentario]"""
+    final_comentario = False            
+    fin_ayuda = False
+    fin_comillas = False
+    ayuda = ""
+    
+    #Contemplamos los cuatro tipos de casos que se puede presentar las lineas de ayuda              
+    while fin_ayuda == False: 
+        
+        #Si la ayuda comienza y termina en la misma linea
+        if  "]" in linea and ":" in linea: 
+            ayuda += linea[linea.find(":")+1:linea.find("]")]
+            fin_ayuda = True
+            
+       #si comienza una linea pero la ayuda no termina en esa linea                 
+        elif not "]" in linea and ":" in linea: 
+            ayuda += linea[linea.find(":")+1:linea.find("\n")]
+            linea = archivo.readline()
+                                
+        #si no comienza ni termina en esa linea             
+        elif not "]" in linea and ":" not in linea: 
+            ayuda += (" " + linea.lstrip()[0:linea.lstrip().find("]")])
+            linea = archivo.readline()
+                                
+        #Si termina en esa linea pero no empezo en ella                 
+        elif "]" in linea and ":" not in linea:  
+                        
+            ayuda += (" " + linea.lstrip()[0:linea.lstrip().find("]")])
+            fin_ayuda = True
+            if "\"\"\"" in linea:
+                final_comentario = True
+    
+    ayuda_sin_coma = ayuda.replace("," , ";")                    
+    
+    return ayuda_sin_coma, final_comentario,linea
+
+def cargar_comentario_comillas(dic_comentarios, archivo, linea, nuevo_archivo, nombre):
+    """
+    [Autor: Lucas Antonel]
+    [Ayuda: Esta funcion se encarga de recorrer un comentario multilinea y cargarlo
+       a su respectivo lugar en el diccionario. Devuelve la linea en la cual termina el comentario]"""
+    
+    
+    fin_comentario = False
+    comentario = ""
+    #Los comentarios multilenea seran agregados al csv como un unico comentario
+    while fin_comentario == False:
+                        
+        if "Autor" in linea:
+           dic_comentarios[nombre]["autor"] = cargar_autor(linea)                   
+                
+        elif "Ayuda" in linea:
+           ayuda , fin_comentario, linea = cargar_ayuda(archivo,linea)
+           dic_comentarios[nombre]["ayuda"] = ayuda
+        
+        elif "\"\"\"" in linea:
+            comentario += linea[linea.find("\"\"\"")+3:linea.lstrip().find("\n")]
+        
+        else:
+            comentario += (" " + linea.rstrip("\n"))
+        
+        if fin_comentario == False:
+            linea = archivo.readline().lstrip() 
+           
+        if "\"\"\"" in linea and fin_comentario == False:
+            fin_comentario = True
+            final_comentario = linea[0:linea.find("\"\"\"")]
+            if len(final_comentario) > 0:
+                comentario += (" " + final_comentario)
+    
+    if len(comentario) > 0:        
+        dic_comentarios[nombre]["resto"].append(comentario)
+    
+    return linea
+
+def extraer_nombre_modulo(nuevo_archivo):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe la ruta del modulo y devuelve el nombre del modulo]
+    """
+    
+    if "\\" in nuevo_archivo:
+        nombre_modulo = nuevo_archivo[(nuevo_archivo.rfind("\\")+1):len(nuevo_archivo)]
+    else:
+        nombre_modulo = nuevo_archivo
+    
+    return nombre_modulo        
+
+def cargar_primera_linea(dic_comentarios, dic_funciones, archivo, linea, nuevo_archivo, nombre):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de cargar los valores iniciales de los dos diccionarios ingresados, tanto los valores por
+       defecto, así como también el nombre, el módulo y los parametros de la función ]
+    """
+    nombre_modulo = extraer_nombre_modulo(nuevo_archivo)
+    dic_comentarios[nombre] = {"nombre": "Sin nombre", "autor": "Funcion sin autor", "ayuda": "Funcion sin ayuda", "resto": []}
+    dic_funciones[nombre] = {"nombre": "Sin nombre", "parametros": "Sin parametros" ,"modulo" : nombre_modulo, "resto": []}
+    #dic_funciones[nombre]["resto"].append(linea.rstrip("\n"))
+    dic_funciones[nombre]["nombre"] = nombre
+    dic_comentarios[nombre]["nombre"] = nombre
+    dic_funciones[nombre]["parametros"] = cargar_parametros (linea)
+                
+                
+def marcar_funcion_principal(linea, dic_funciones,dic_comentarios):                
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de encontrar la funcion principal y
+    marcarla en el diccionario con el string main_ ]"""
+                    
+    no_tener_en_cuenta = ["\n", "#"]
+    if linea != "" and linea[0] != " " and "def" not in linea and "import" not in linea and linea[0] not in no_tener_en_cuenta:
+        funcion_principal = linea[0:linea.find("(")]
+        if funcion_principal in dic_funciones:
+            dic_funciones[funcion_principal]["nombre"] = "main_" + funcion_principal
+            dic_comentarios[funcion_principal]["nombre"] = "main_" + funcion_principal                
+                        
+def corroborar_final_funcion(linea,dic_funciones,nombre):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de analizar si se ha llegado a al final
+    de la funcion. Devuelve dos valores booleanos uno para saber si la funcion finalizó y otro para saber si además de
+    finalizar la funcion se ha llegado al comienzo de la siguiente funcion]"""  
+    
+    fin_funcion = False
+    comienza_funcion = False
+    
+    if linea == "":
+        fin_funcion = True
+    
+    elif (linea[0] != " " and linea[0] != "\n") :
+        fin_funcion = True
+    
+    elif "return " in linea:
+        cargar_lineas(linea, dic_funciones,nombre)
+        fin_funcion = True
+        
+    if linea[0:4] == "def ":
+        comienza_funcion = True
+            
+    return fin_funcion, comienza_funcion        
+    
+def cargar_lineas(linea, dic_funciones,nombre):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de cargar al diccionario rebido una linea
+       desde su comienzo hasta su final]"""
+    # Contempla que todas las lineas no esten vacías incluso cuando tienen espacios adentro
+    linea_margen = linea.lstrip()
+    if "#" in linea and "\"#\"" not in linea:
+        codigo = linea_margen[0: linea_margen.find("#")]                
+        dic_funciones[nombre]["resto"].append(codigo)    
+    else:
+        codigo = linea_margen[0: linea_margen.find("\n")]                
+        dic_funciones[nombre]["resto"].append(codigo)
+    
+    
+    
+def cargar_comentario_numeral(linea, dic_comentarios, nombre):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de cargar al diccionario rebido una linea de
+       comentario con numeral]"""
+    comentario_hashtagg = linea[linea.find("#")+1:linea.find("\n")]
+    dic_comentarios[nombre]["resto"].append(comentario_hashtagg)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
