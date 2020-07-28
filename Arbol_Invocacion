@@ -1,0 +1,174 @@
+from Panel_General_de_Funciones import guardar_nombres
+
+#-------------------------------------------------------------------------------
+def buscar_main(arch_fuente):
+    """[Autor: Augusto]
+       [Ayuda: Busca el main en archivo_fuente, devuelve nombre]    
+    """    
+    l_funciones = guardar_nombres(arch_fuente) 
+
+    i = 0
+    while l_funciones[i].find("main_") == -1:
+        i += 1
+
+    funcion_main = l_funciones[i]
+    
+    return funcion_main
+
+#-------------------------------------------------------------------------------
+def buscar_funcion(funcion, arch_fuente):
+    """[Autor: Augusto]
+       [Ayuda: Busca linea de funcion en fuente_unico. Devuelve como LISTA]    
+
+        pre: Recibe funcion a buscar.
+    
+        Post: Devuelve linea de la funcion como LISTA.
+    """    
+    #-------------- busca la linea de la funcion ---------------------
+    linea = arch_fuente.readline()
+    
+    while (funcion != linea[0:linea.find(",")]):
+        linea = arch_fuente.readline()
+
+    arch_fuente.seek(0)    
+    linea_funcion_buscada = linea       
+    #-------------- la convierte en  LISTA----------------------------   
+    l_funcion = linea_funcion_buscada.rstrip("\n").split(",")
+    
+    return l_funcion
+
+#-------------------------------------------------------------------------------
+def listar_invocante_invocadas(funcion, arch_fuente):
+    """[Autor: Augusto]
+       [Ayuda: Recibe funcion. Devuelve lista con funcion + funciones invocadas]
+
+       pre: Recibe funcion a buscar.
+       
+       Post: Devuelve LISTA como [funcion, f_invocada_1,...,f_invocada_n].
+    """    
+    l_instrucciones = buscar_funcion(funcion, arch_fuente)
+    
+    del(l_instrucciones[1])#elimina parametros
+    del(l_instrucciones[1])#elimina nombre de modulo
+    
+    l_todas_funciones = guardar_nombres(arch_fuente) 
+    
+    #------------extrae las funciones de las instrucciones--------------    
+    l_funciones = [funcion]
+    for instruccion in l_instrucciones[1:] :        
+        for funcion in l_todas_funciones:
+            if ((funcion + "(") in instruccion) or ((funcion + " (") in instruccion):
+                l_funciones.append(funcion)
+                
+    return l_funciones
+
+#-------------------------------------------------------------------------------      
+def diccionario_invoc_arbol(arch_fuente):
+    """[Autor: Augusto]
+       [Ayuda:Genera diccionario de invocaciones para arbol]
+        
+        pre: -.  
+        Post: genera diccionario como {funcion_1:[invocadas_1],...,funcion_n:[invocadas_n]}.
+    """     
+    dic_invocaciones = {}
+    for funcion in guardar_nombres(arch_fuente):    
+        l_invocaciones = listar_invocante_invocadas(funcion, arch_fuente)
+        dic_invocaciones[funcion] = l_invocaciones[1:]
+
+    return dic_invocaciones
+
+#-------------------------------------------------------------------------------
+def diccionario_ordenado(arch_fuente): 
+    """[Autor: Augusto]
+       [Ayuda: Si funcion es invocada por si misma, la posiciona primero en
+       la lista de invocaciones].
+    """    
+    dic_invocaciones = diccionario_invoc_arbol(arch_fuente)
+    
+    for funcion in dic_invocaciones:
+        l_subfunciones = dic_invocaciones[funcion]
+        if funcion in l_subfunciones:
+            l_subfunciones.remove(funcion)
+            l_subfunciones.insert(0,funcion)
+            
+    return dic_invocaciones
+
+#-------------------------------------------------------------------------------
+def diccionario_cant_lineas(arch_fuente): 
+    """[Autor: Augusto]
+       [Ayuda:Recibe funcion. Devuelve diccionario como
+       {funcion_1 : N°lineas_1,...,funcion_n : N°lineas_n}]
+    """
+    dic_cant_lineas = {}
+    for funcion in guardar_nombres(arch_fuente):        
+    
+        l_funcion_instrucciones = buscar_funcion(funcion, arch_fuente)        
+        cant_instrucciones = (len(l_funcion_instrucciones) - 3)
+        
+        dic_cant_lineas[funcion] = cant_instrucciones
+        
+    return dic_cant_lineas            
+
+#-------------------------------------------------------------------------------
+def imprimir_arbol(renglon, arch_fuente):
+    """[Autor: Augusto y Lucas]
+       [Ayuda: imprime linea a linea el arbol de invocaciones]
+    """
+    dic_cant_lineas = diccionario_cant_lineas(arch_fuente)
+    
+    for funcion in renglon:
+
+        if funcion !=0:
+            func_parentesis = "{}({})".format(funcion, dic_cant_lineas[funcion])
+            
+        
+        if funcion == 0:
+            print("{0:<25}".format(""),end = "")
+            
+        elif renglon[0] == funcion:
+            print("{0:<25}".format(func_parentesis), end="")
+
+        else:
+            print("---> {0:20}".format(func_parentesis), end="")
+
+    print("\n",end = "") #para mas espacio entre lineas, doble \n
+    
+#-------------------------------------------------------------------------------
+def obtener_contenido(funcion, dic_invocaciones, lista, columna, arch_fuente):
+    """[Autor: Augusto y Lucas]
+       [Ayuda: Recursivamente, genera listas sucesivas de elementos "funcion" o "0"]
+    """   
+    lista.append(funcion)    
+    if ((len(dic_invocaciones[funcion]) != 0)) and (columna == 0 or lista[-1] != lista[-2]):
+    
+        columna += 1
+        for funcion_invocada in dic_invocaciones[funcion]:
+            
+            obtener_contenido(funcion_invocada,dic_invocaciones,lista,columna,arch_fuente)
+            lista.clear()
+            for x in range(0,columna):
+                lista.append(0)
+    
+    else:                
+        imprimir_arbol (lista, arch_fuente)
+        
+#-------------------------------------------------------------------------------
+def arbol_invocaciones():
+    """[Autor: Augusto]
+       [Ayuda: Abre fuente_unico y gestiona arbol de invocaciones]
+    """     
+    arch_fuente = open("fuente_unico.csv", "r")
+    
+    func_main = buscar_main(arch_fuente)    
+    dic_invoc_ord = (diccionario_ordenado(arch_fuente))
+    lista=[]
+    columna = 0
+    
+    #imprime cabecera y pie para el arbol
+    print("\n\n{0}\t{1}\t{0}\n".format("-"*25, "ARBOL DE INVOCACIONES" ))
+    
+    obtener_contenido(func_main, dic_invoc_ord, lista, columna, arch_fuente)
+    
+    print("\n""{0}\n".format("-"*80))
+          
+    arch_fuente.close()
