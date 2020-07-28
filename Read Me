@@ -1,0 +1,17 @@
+Grupo Verde
+
+Para ejecutar la aplicación debe abrirse el menu principal y seguir las indicaciones por pantalla.
+
+
+Para la información que recibe nuestro programa en el archivo programas.txt presuponemos que dichos programas contemplan las siguientes cuestiones:
+
+1-No hay comentarios con triple encomillado en una sola linea
+2-Los comentarios que contienen la ayuda y el autor tienen la siguiente forma: 
+"""[Autor: Juan Perez]
+   [Ayuda: Evalua si el numero recibido es primo o no, devolviendo True en
+   caso de serlo, y False en caso contrario.]
+"""
+Tanto la ayuda como el autor tienen Mayuscula y tienen sus respectivos corchetes.
+3-Contemplamos que puede haber comentario con # en la misma línea que una hay código.
+4-decidimos marcar la funcion principal durante la creacion de los archivos .csv para poder facilitar su identificacion durante las funcionalidades de nestro programa.
+5-Los archivos csv intermedios generados de cada módulo son borrados luego de realizar el merge.
