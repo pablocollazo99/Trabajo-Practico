@@ -1,0 +1,115 @@
+from merge_n_archivos import merge
+from Herramientas_Diccionario import *
+import os
+
+
+def llamar_archivos():
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de abrir el archivo
+    programas.txt y devuelve una lista con los nombres de los modulos que se deben llamar]
+    """
+    with open("programas.txt" , "r") as archivo:
+        
+        linea = archivo.readline()
+        lista_modulos = []
+        while linea:
+            modulo = linea.rstrip("\n")
+            lista_modulos.append(modulo)
+            linea = archivo.readline()
+    
+    return lista_modulos
+
+
+def dic_archivo(nuevo_archivo):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de recorrer una única vez las lineas de codigo del módulo
+    ingresado (nuevo_archivo) y devuelve un diccionario de comentarios y otro de lineas de codigo de cada funcion del módulo]
+    """
+    
+    dic_comentarios = {}
+    dic_funciones = {}
+    
+    with open(nuevo_archivo , "r", encoding="utf8") as archivo:
+        
+        linea = archivo.readline()
+        while linea:
+            comienza_funcion = False
+            if linea[0:4] == "def ":
+                linea, comienza_funcion = cargar_funcion(dic_comentarios, dic_funciones, archivo, linea, nuevo_archivo)
+            
+            marcar_funcion_principal(linea, dic_funciones, dic_comentarios)      
+            if comienza_funcion == False:
+                linea = archivo.readline()
+            
+    return dic_comentarios, dic_funciones
+
+
+def agregar_info(tupla, nombre_archivo, campo_2, campo_3):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de cargar los campos tanto de comentarios como de lineas de codigo a su respectivos
+    archivo txt generado automaticamente. Recibe una tupla ordenada alfabeticamente con dos items, uno es el nombre de la
+    funcion y el otro es el diccionario creado por la funcion dic_archivos]
+    """
+    with open( nombre_archivo , "a") as archivo:
+        for linea in tupla:
+            archivo.write("{},{},{}".format(linea[1]["nombre"], linea[1][campo_2],linea[1][campo_3]))      
+            if len(linea[1]["resto"]) != 0:
+                for extras in linea[1]["resto"]:
+                    sin_coma = extras.replace("," , ";")
+                    archivo.write(",{}".format(sin_coma))
+        
+            archivo.write("\n")
+
+def ordenar(dic):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función recibe un diccionario y devuelve una tupla ordenada alfabéticamente]
+    """
+    
+    tupla = sorted(dic.items(), key = lambda x : x[0], reverse = False)
+    
+    return tupla
+
+
+def crear_csv():
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función al ser llamada crea dos archivos .csv (fuente_unico.csv y comentarios.csv)
+       con todos los programas cuyos nombres se encuentren en el archivo txt llamado programas.txt]
+    """
+                        
+    lista_modulos = llamar_archivos()
+    
+    """ Estas listas se encargan de guardar los nombres de los archivos generados
+    por el programa y que le serviran al merge para generar los archivos.csv finales"""
+    lista_modulos_comentarios_csv = []
+    lista_modulos_funciones_csv = []
+    
+     
+    for modulo in lista_modulos:
+        """Este for se encarga de recorrer la lista de modulos abriendo uno por uno
+        los modulos y guarda los respectivos nombres en la lista"""
+        nombre_archivo_comentarios = (modulo[modulo.rfind("\\")+1:modulo.index(".")]) + "_comentarios.txt"
+        nombre_archivo_funciones = (modulo[modulo.rfind("\\")+1:modulo.index(".")]) + "_funciones.txt"
+        lista_modulos_comentarios_csv.append(nombre_archivo_comentarios)
+        lista_modulos_funciones_csv.append(nombre_archivo_funciones)
+        
+        """La funcion dic_archivo se encarga de recorrer el modulo linea por linea, y devolver un
+        diccionario de sus comentarios y otro de sus lineas de codigo tal cual se requieren"""
+        dic_comentarios, dic_funciones = dic_archivo(modulo)
+        
+        """Estas funciones se ancargan de cargar los diccionarios a los archivos txt
+        de cada módulo, previos a realizar el merge. Además los carga ordenados alfebeticamente,
+        lo que nos posibilitará realizar el merge"""
+        agregar_info (ordenar(dic_comentarios), nombre_archivo_comentarios, "autor", "ayuda")
+        agregar_info (ordenar(dic_funciones), nombre_archivo_funciones, "parametros", "modulo" )
+    
+    """Una vez creado todos los archivos de cada modulo utilizamos el merge para
+    generar un único archivo de comentarios y de lineas de codigo"""
+    merge(lista_modulos_comentarios_csv)
+    merge(lista_modulos_funciones_csv)
+    
+    for archivo_borrar in lista_modulos_comentarios_csv:
+        os.remove(archivo_borrar)
+    for archivo_borrar in lista_modulos_funciones_csv:
+        os.remove(archivo_borrar)
+   
+          
