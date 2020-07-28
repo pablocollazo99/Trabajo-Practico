@@ -1,0 +1,141 @@
+#Informacion Desarrollador
+def calcular_promedio(total_lineas_por_autor,total_lineas_aplicacion):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función recibe el total de lineas por autor y el total general de la
+    aplicacion y devuelve el procentaje de lineas programado por dicho autor]"""
+    
+    promedio = int((total_lineas_por_autor/total_lineas_aplicacion)*100)
+    
+    return promedio        
+
+
+def imprimir_plantilla (dic_por_funcion,  lista_autores_ordenado, total_lineas_aplicacion):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función imprime por pantalla la plantilla de participacion de cada autor a
+       partir del archivo participacion.txt]"""
+    
+    with open("participacion.txt"  , "r") as archivo:
+        
+        for linea in archivo:
+            print(linea.rstrip())
+
+    
+
+def generar_archivo(dic_autores,  lista_autores_ordenado, total_lineas_aplicacion):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función genera un archivo txt con la plantilla de participacion de cada autor.
+       Recibe el diccionario que nos dice que funcion escribio cada autor,
+       y que tiene por clave la cantidad de lineas que tiene cada función. A partir de la lista
+       de autores ordenados determina que autor llamar primero y que de esa forma esten ordenados
+       tal cual se pide en el TP.]"""
+    
+    
+    with open("participacion.txt"  , "w") as archivo:
+        total_funciones_aplicacion = 0
+    
+        archivo.write("    Informe de Desarrollo por Autor \n")
+        archivo.write("\n")
+        for tupla in  lista_autores_ordenado:
+            nombre = tupla[0]
+            total_funciones = 0
+            total_lineas_por_autor = 0
+        
+            archivo.write("Autor: {}".format( nombre))
+            archivo.write("\n")
+            archivo.write("\n")
+            archivo.write("      {0:29}{1:5}".format("Funcion", "Lineas"))
+            archivo.write("\n")
+            archivo.write("      -----------------------------------")
+            archivo.write("\n")
+            for funcion in dic_autores[nombre]: 
+                archivo.write("      {0:30}{1:5}".format( funcion, dic_autores[nombre][funcion]))
+                archivo.write("\n")
+                total_funciones += 1
+                total_funciones_aplicacion += 1
+                total_lineas_por_autor += dic_autores[nombre][funcion]
+                promedio = calcular_promedio(total_lineas_por_autor,total_lineas_aplicacion)
+            
+            
+            archivo.write("      {0:<3} Funciones - Lineas          {1:>3}  {2}%".format(total_funciones, total_lineas_por_autor, promedio ))
+            archivo.write("\n")
+            archivo.write("\n")
+        archivo.write("Total: {0} Funciones - Lineas          {1}\n".format(total_funciones_aplicacion, total_lineas_aplicacion))    
+        archivo.write("\n")
+        archivo.write("--------------------------------------------\n")
+
+
+def ordenar_dic (dic):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función recibe un diccionario y devuelve una lista
+        de tuplas ordenada alfabéticamente]"""
+    
+    lista = sorted(dic.items(), key = lambda x : x[1], reverse = True)
+    
+    return lista
+
+def total_lineas(lista):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función recibe una lista y devuelve el total de
+       lineas de dicha lista]"""
+    total_lineas_locales = len(lista)-2
+    
+    return total_lineas_locales
+
+def crear_diccionario(comentarios,funciones):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recorre los archivos .csv y arma dos diccionarios,
+       uno que tiene por clave el autor y un diccionario anidado con las funciones
+       y su cantidad de lineas. El otro diccionario tiene por claves a los autores
+       y por valor las lineas totales que escribió dicho autor. Como tercer valor
+       devuelve el total de lineas de todo el fuente_unico.csv]
+    """
+    total_lineas_aplicacion = 0
+    dic_autores = {}     
+    dic_total_autores = {}
+    
+    linea_coment = comentarios.readline()
+    while linea_coment:
+        linea_funciones = funciones.readline()
+        lista_funciones = linea_funciones.rstrip("\n").split(",")
+        lista_comentarios = linea_coment.rstrip("\n").split(",")
+        
+        lineas_funcion = total_lineas(lista_funciones)
+        total_lineas_aplicacion += lineas_funcion
+        autor = lista_comentarios[1]
+        funcion = lista_comentarios[0]
+        
+        if autor not in dic_autores: 
+            dic_autores[autor] = {funcion : lineas_funcion}
+            dic_total_autores[autor] = lineas_funcion
+        else:
+            dic_autores[autor][funcion] = lineas_funcion
+            dic_total_autores[autor] += lineas_funcion
+            
+        linea_coment = comentarios.readline()
+     
+   
+    
+    return dic_autores, dic_total_autores, total_lineas_aplicacion
+
+
+    
+def info_desarrollador():
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta función al ser llamada imprime por pantalla y carga a un archivo txt llamado "participacion" la información de la
+       participacion de cada autor en el código]
+    """
+    
+    comentarios = open("comentarios.csv" , "r")
+    funciones   = open("fuente_unico.csv" , "r")
+    
+    dic_autores, dic_total_autores, total_lineas_aplicacion = crear_diccionario(comentarios,funciones)
+    lista_autores_ordenado = ordenar_dic(dic_total_autores)
+    
+    generar_archivo (dic_autores,  lista_autores_ordenado, total_lineas_aplicacion)
+    imprimir_plantilla (dic_autores,  lista_autores_ordenado, total_lineas_aplicacion)
+    
+    comentarios.close()
+    funciones.close()
+    
+ 
+
