@@ -1,0 +1,149 @@
+#1. Panel General de Funciones
+
+def guardar_nombres(fuente):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: Lee el archivo Fuente_unico.csv y guarda los nombres de
+       todas las funciones en una lista]
+    """
+    
+    linea_fuente=fuente.readline()
+    lista_nombres_funciones=[]
+    while linea_fuente:
+        lista_linea=linea_fuente.split(",")
+        lista_nombres_funciones.append(lista_linea[0])
+        linea_fuente=fuente.readline()
+    fuente.seek(0)
+    return lista_nombres_funciones
+
+def diccionario_invocaciones(fuente, lista_nombres_funciones):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: Crea un diccionario que contendrá la cantidad de invocacioes de cada funcion.
+       Para hallar el número de invocaciones, lee nuevamente el archivo, y cada vez que encuentre una función,
+       suma la aparición en el diccionario.]
+    """
+    
+    dic_invocaciones={}
+    linea_fuente=fuente.readline()
+    for x in lista_nombres_funciones:
+            dic_invocaciones[x]=0
+    while linea_fuente:
+        lista_linea=linea_fuente.split(",")
+        for x in dic_invocaciones:
+            cant_apariciones=str(lista_linea[3:]).count(x + "(") - str(lista_linea[3:]).count("_" + x + "(") 
+            dic_invocaciones[x] += cant_apariciones
+            
+        linea_fuente=fuente.readline()
+    fuente.seek(0)
+    return dic_invocaciones
+        
+    
+def parametros(lista_funcion):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: Calcula la cantidad de parametros de la funcion evaluada]
+    """
+    
+    if lista_funcion[1]=="()":
+        cant_parametros=0
+    else:
+        punto_comas=lista_funcion[1].count(";")
+        cant_parametros= punto_comas + 1    
+    return cant_parametros
+
+
+def descripcion(lista_comment):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: Evalua si la funcion tiene descripción]
+    """
+    
+    if "Funcion sin ayuda" in lista_comment[2]:
+        descripcion= "No"
+    else:
+        descripcion="Sí"
+    return descripcion
+
+def modulo(lista_funcion):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: devuelve el modulo en el que está la función,
+       para luego poder agregarselo al nombre]
+    """
+    
+    path = lista_funcion[2]
+    x = str(path).rfind("/")
+    nombre_modulo=path[x+1:]
+    return nombre_modulo
+
+
+def panel_general(dic_invocaciones, fuente, comentario):
+    """[Autor: Nicolás Carreño]
+       [Ayuda: Lee los archivos fuente_unico.csv y comentarios.csv, y usa
+       el diccionario de invocaciones para recolectar la informacion necesaria para la tabla
+       y el archivo Panel_General.csv, los cuales imprime y crea.]
+    """
+    
+    panel=open("Panel_General.csv","w")
+    panel.write("Función, Parámetros, Líneas, Invocacioes, Returns, If/Elif, For, While, Break, Exit, Comment, Ayuda, Autor\n")
+    print("{0:^60} \t{1:^10} \t{2:^6} \t{3:^11} \t{4:^7} \t{5:^7} \t{6:^3} \t{7:^5} \t{8:^5} \t{9:^4} \t{10:^7} \t{11:^5} \t{12:^15}".format("Función", "Parámetros", "Líneas", "Invocacioes", "Returns", "If/Elif", "For", "While", "Break", "Exit", "Comment", "Ayuda", "Autor"))
+    linea_fuente=fuente.readline()
+    linea_comment=comentario.readline()
+    while linea_fuente:
+        datos=""
+        lista_funcion = linea_fuente.split(",")
+        lista_comment = linea_comment.split(",")
+        
+        nombre_modulo= modulo(lista_funcion)
+        nombre=lista_funcion[0] + "." + nombre_modulo #Nombre de la funcion 
+        datos= datos + (nombre) + "," 
+        
+        cant_parametros = parametros(lista_funcion) #Cantidad de Parametros
+        datos= datos + str(cant_parametros) + ","
+        
+        cant_lineas=  len(lista_funcion) - 2 #Cantidad de Lineas
+        datos= datos + str(cant_lineas) + ","
+        
+        cant_invocaciones=dic_invocaciones[lista_funcion[0]] #Cantidad de Invocaciones
+        datos= datos + str(cant_invocaciones) + ","
+        
+        cant_returns= str(lista_funcion[3:]).count("'return ") #Cantidad de Returns
+        datos= datos + str(cant_returns) + ","
+        
+        cant_if_elif= str(lista_funcion[3:]).count("'if ") #Cantidad de IF/Elif
+        datos= datos + str(cant_if_elif) + ","
+        
+        cant_for=str(lista_funcion[3:]).count("'for ") #Cantidad de For
+        datos= datos + str(cant_for) + ","
+        
+        cant_while=str(lista_funcion[3:]).count("'while ") #Cantidad de While
+        datos= datos + str(cant_while) + ","
+        
+        cant_break= str(lista_funcion[3:]).count("'break ") #Cantidad de Break"
+        datos= datos + str(cant_break) + ","
+        
+        cant_exit=str(lista_funcion[3:]).count("'exit ") #Cantidad de Exit
+        datos= datos + str(cant_exit) + ","
+        
+        cant_lineas_comment= len(lista_comment) - 3 #Cantidad de Lineas de Comentarios
+        datos= datos + str(cant_lineas_comment) + ","
+        
+        hay_descripcion=descripcion(lista_comment) #Tiene/No tiene descripcion
+        datos= datos + (hay_descripcion) + ","
+        
+        responsable = lista_comment[1] # Autor
+        datos= datos + (responsable) + "\n"
+        
+        print("{0:^60} \t{1:^10} \t{2:^6} \t{3:^11} \t{4:^7} \t{5:^7} \t{6:^3} \t{7:^5} \t{8:^5} \t{9:^4} \t{10:^7} \t{11:^5} \t{12:^15}".format(nombre,cant_parametros , cant_lineas, cant_invocaciones, cant_returns, cant_if_elif, cant_for, cant_while, cant_break, cant_exit, cant_lineas_comment, hay_descripcion, responsable))
+        linea_fuente=fuente.readline()
+        linea_comment=comentario.readline()
+        panel.write(datos)
+    
+    panel.close()
+            
+
+
+def panel_general_funciones():
+    fuente=open("fuente_unico.csv","r")
+    comentario=open("comentarios.csv","r")
+    lista_nombres_funciones=guardar_nombres(fuente)
+    dic_invocaciones=diccionario_invocaciones(fuente, lista_nombres_funciones)
+    panel_general(dic_invocaciones,fuente,comentario)
+    fuente.close()
+    comentario.close()
