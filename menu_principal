@@ -1,0 +1,79 @@
+from Crear_Csv import crear_csv
+from Info_Desarrollador import info_desarrollador
+from Arbol_Invocacion import arbol_invocaciones
+from Analizador import analizador
+from Panel_General_de_Funciones import panel_general_funciones
+from Consulta_de_Funciones import consulta_funciones
+
+
+
+def menu_opciones():
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de imprimir por pantalla el manu inicial]
+    """
+    
+    print("--------------------------------------------")
+    print("MENU DE ANALISIS DEL DISEÑO MODULAR")
+    print()
+    print("Ingrese las opciones que desee")
+    print()
+    print("1. Panel General")
+    print("2. Consulta de funciones")
+    print("3. Analizador de Reutilización de Código ")
+    print("4. Árbol de Invocación ")
+    print("5. Información por Desarrollador ")
+    print("6. Terminar")
+    print()
+    print("--------------------------------------------")
+
+
+
+
+def pedir_valor(pedido, opciones):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de pedir al usuario que ingrese la funcion del programa que quiere realizar]
+    """
+    
+    opcion = input(pedido)
+    while opcion not in opciones:
+        print("La opcion ingresada es incorrecta, por favor vuelva a intentar")
+        opcion = input(pedido)
+        
+    return opcion
+        
+
+def menu_elegir():
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion se encarga de llamar a la funcion requerida por el usuario]
+    """
+    menu_opciones()
+    opcion = pedir_valor("Ingrese una opcion: ", "123456")
+    print("--------------------------------------------")
+    while opcion != "6":
+        if opcion == "1":
+            panel_general_funciones()
+        elif opcion == "2":
+            consulta_funciones()
+        elif opcion == "3":
+            analizador()
+        elif opcion == "4":
+            arbol_invocaciones()
+        else:
+            info_desarrollador()
+        print()
+        input("Presiones cualquier tecla para volver al menú:")
+        menu_opciones()
+        opcion = pedir_valor("Ingrese una opcion: ", "123456")
+
+def main():
+    """[Autor: Lucas Antonel]
+    """
+    crear_csv()
+    menu_elegir()
+        
+main()    
+    
+    
+    
+    
+    
