@@ -1,0 +1,103 @@
+
+def merge(lista):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Diccionario que tiene por clave el nombre y como item una lista con el nombre
+    del archivo al cual pertenece, la posicion de la linea y la linea]"""
+    
+    dic = {}
+    cargar_primeros_datos(dic, lista)
+    minimo = buscar_min(dic)
+    ciclo(minimo, dic, lista)
+    
+    
+def cargar_primeros_datos(dic, lista):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Este funcion recorre y abre todos los archivos cargados en la
+    lista y guarda los primeros valores(nombre del archivo, la posicion de la linea y la linea)
+    de cada archivo en un diccionario]"""
+    for archivo in lista:
+        
+        
+        linea , posicion = leer(archivo , 0)
+        
+        """diccionario que tiene por clave el nombre y como item una lista con el nombre
+        del archivo al cual pertenece, la posicion de la linea y la linea"""
+        
+        dic[linea[0]] = [archivo, posicion, linea]
+
+def ciclo(minimo, dic, lista):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Este funcion recorre y abre todos los archivos cargados en la
+    lista y guarda los primeros valores de cada archivo en diccionarios]"""
+    
+    while minimo != "zzzz":
+        
+        """Mientras el minimo no sea el "zzzz",
+        sabemos que todavia no termino el merge"""
+        
+        if "comentarios" in lista[0]:
+            # La posicion dic[minimo][2] accede al valor de la linea guardada en el diccionario
+            agregar_linea(dic[minimo][2], "comentarios.csv")
+    
+        else:
+            agregar_linea(dic[minimo][2], "fuente_unico.csv")
+        
+        #Leo la siguiente linea en el archivo en el cual ya cargamos el minimo
+        nueva_linea , posicion_nueva = leer(dic[minimo][0], dic[minimo][1])
+        
+        #Cargamos el diccionario con los datos nuevos, y borramos los innecesarios
+        dic[nueva_linea[0]] = [dic[minimo][0], posicion_nueva,  nueva_linea]
+        dic.pop(minimo)
+                
+        #Buscamos nuevamente el minimo
+        minimo = buscar_min(dic)
+    
+def leer(nombre_archivo, posicion):
+    
+    """[Autor: Lucas Antonel]
+       [Ayuda: Es una funcion que recibe el nombre de un archivo existente
+    y una posicion a partir de la cual leer el archivo. Devuelve una lista de
+    la linea buscada y la posicion final del cursor para futuras llamadas
+    En caso de terminar el archivo devuelve una lista "zzzz"]"""
+    
+    with open(nombre_archivo , "rt") as archivo:
+        
+        archivo.seek(posicion) 
+        linea = archivo.readline()
+        
+        if linea:
+            salida = linea.rstrip("\n").split(",")
+        
+        else:
+            salida = ["zzzz"]
+        
+        
+        return salida, archivo.tell()
+
+def buscar_min(dic):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe un diccionario y devuelve la clave entre las
+       demas claves del diccionario y devuelve la menor clave]
+    """
+    #recibe un dicionario y devuelve la clave menor alfabeticamente 
+    m = min(dic.keys())
+    
+    return m
+    
+def agregar_linea(lista, nombre):
+    """[Autor: Lucas Antonel]
+       [Ayuda: Esta funcion recibe una lista y la agrega al archivo en
+       formato .csv cuyo nombre es el indicado como parametro]
+    """
+    #Recibe una lista y la carga al nombre definido
+    
+    with open( nombre , "a") as archivo:
+        for campo in lista:
+            if campo == lista[0]:
+                archivo.write("{}".format(campo))      
+            else:
+                archivo.write(",{}".format(campo))      
+             
+        archivo.write("\n")
+
+     
