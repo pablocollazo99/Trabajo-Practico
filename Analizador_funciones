@@ -80,7 +80,7 @@ def tabla(lista_nombres_funciones, dic_invocaciones,dic_fin):
     analizador = open("analizador.txt", "w")
     print("{0:30} \t |".format("Funciones"),end = " ")
     analizador.write("{0:30} \t |".format("Funciones"))
-    for i in range(1 ,len(lista_nombres_funciones)):
+    for i in range(1 ,len(lista_nombres_funcions) + 1):
         print("{0:2} \t |".format(i),end = " " )
         analizador.write("{0:2} \t |".format(i))
     print("\n")
